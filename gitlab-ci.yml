@@ -1,0 +1,25 @@
+stages:
+  - deploy
+  - run
+
+deploy:
+    stage: deploy
+    image: registry.i9xp.com.br:8082/docker/forticlient
+    allow_failure: false
+    environment:
+        name: hom
+        url: http://api.chat.poc-5.net.br
+    only:
+      - /^release\/.*$/
+    script:
+      - bash .gitlab-deploy.sh -h ${IP_DEVELOPMENT_SERVER} -po ${SSH_PORT} -u ${USER_DEVELOPMENT_SERVER} -p ${PASS_DEVELOPMENT_SERVER} -g ${GROUP_NAME} -pr ${PROJECT_NAME}
+run:
+    stage: run
+    image: registry.i9xp.com.br:8082/docker/forticlient
+    when: manual
+    allow_failure: false
+    only:
+      - /^release\/.*$/
+    script:
+      - export SSHPASS=${PASS_DEVELOPMENT_SERVER}
+      - sshpass -e ssh -p ${SSH_PORT} -o stricthostkeychecking=no ${USER_DEVELOPMENT_SERVER}@${IP_DEVELOPMENT_SERVER} docker-compose up -d
